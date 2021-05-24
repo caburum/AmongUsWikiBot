@@ -1,7 +1,8 @@
 export default function(text: string) {
-	let matches: string[] = text.match(/\[\[w:c:\S+:.*?(?:\|.*?]]|]])/gmi) || [];
+	// Fandom interwiki
+	let fandomMatches: string[] = text.match(/\[\[w:c:\S+:.*?(?:\|.*?]]|]])/gmi) || [];
 
-	matches.forEach((match) => {
+	fandomMatches.forEach((match) => {
 		let link = match.replace('[[w:c:', '').replace(']]', ''); // Trim wrapper
 
 		let [interwiki, name] = link.split(/\|(.*)/);
@@ -12,6 +13,21 @@ export default function(text: string) {
 
 		text = text.replace(match, template);
 	})
+
+	// Generic interwiki
+	let matches: string[] = text.match(/\[\[(?:wikipedia|wp):.*?(?:\|.*?]]|]])/gmi) || [];
+
+	matches.forEach((match) => {
+		let link = match.replace('[[', '').replace(']]', ''); // Trim wrapper
+
+		let [interwiki, name] = link.split(/\|(.*)/);
+		let [wiki, page] = interwiki.split(/:(.*)/);
+		if (page == name) { name = '' }
+		if (wiki == 'wikipedia') { wiki = 'wp' }
+		let template = `{{Iw|${wiki}${page ? '|' + page : (name ? '|' : '')}${name ? '|' + name : ''}}}`;
+
+		text = text.replace(match, template);
+	});
 
 	return text;
 }

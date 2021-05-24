@@ -1,6 +1,6 @@
 import { mwn } from 'mwn';
 const path = require('path');
-const { version } = require('./package.json')
+const { version } = require('./package.json');
 
 const ratelimit = 3 * 1000;
 
@@ -27,12 +27,12 @@ bot.setOptions({
 bot.enableEmergencyShutoff({
 	page: 'User:' + bot.options.username!.match(/.*(?=@)/)![0] + '/shutoff',
 	intervalDuration: 5 * 1000,
-	condition: function (pagetext: string) {
+	condition: function(pagetext: string) {
 		if (pagetext.includes('EMERGENCY SHUTOFF')) {
 			return false;
 		} else return true;
 	},
-	onShutoff: function () {
+	onShutoff: function() {
 		console.log('\x1b[91m' + 'EMERGENCY SHUTOFF' + '\x1b[39m');
 		process.exit();
 	}
@@ -49,7 +49,7 @@ require('fs').readdirSync(path.resolve('./modules/')).forEach(function(modulePat
 // Login
 bot.login().then(async function() {
 	// Get all pages
-	var pages: {pageid: number, ns: number, title: string}[] = await bot.request({
+	var pages: { pageid: number, ns: number, title: string }[] = await bot.request({
 		action: 'query',
 		list: 'allpages',
 		prop: 'info',
