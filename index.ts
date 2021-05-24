@@ -1,5 +1,6 @@
 import { mwn } from 'mwn';
 const path = require('path');
+const { version } = require('./package.json')
 
 const ratelimit = 3 * 1000;
 
@@ -7,7 +8,7 @@ const bot = new mwn({
 	apiUrl: 'https://among-us.fandom.com/api.php',
 	username: process.env.username,
 	password: process.env.password,
-	userAgent: 'Among Us Wiki Bot/1.0 (User:Caburum) mwn/0.10.4', // https://meta.wikimedia.org/wiki/User-Agent_policy
+	userAgent: `Among Us Wiki Bot/${version} (User:Caburum) mwn/0.10.4`, // https://meta.wikimedia.org/wiki/User-Agent_policy
 
 	defaultParams: { // Set default parameters to be sent to be included in every API request
 		assert: 'user' // Ensure we're logged in
@@ -24,7 +25,7 @@ bot.setOptions({
 });
 
 bot.enableEmergencyShutoff({
-	page: 'Special:MyPage/shutoff',
+	page: 'User:' + bot.options.username!.match(/.*(?=@)/)![0] + '/shutoff',
 	intervalDuration: 5 * 1000,
 	condition: function (pagetext: string) {
 		if (pagetext.includes('EMERGENCY SHUTOFF')) {

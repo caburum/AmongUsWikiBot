@@ -1,16 +1,24 @@
 {
   "name": "AmongUsWikiBot",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "An automated modular bot for making bulk edits on MediaWiki wikis, developed for the Among Us Wiki",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node index.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "mediawiki"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caburum/AmongUsWikiBot.git"
+  },
+  "author": "Calum Dingwall (https://github.com/caburum)",
+  "license": "MIT",
   "dependencies": {
-    "glob": "^7.1.7",
     "mwn": "^0.10.4"
+  },
+  "devDependencies": {
+    "typescript": "^4.2.4",
+    "ts-node": "^10.0.0"
   }
 }
