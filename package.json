@@ -1,24 +1,28 @@
 {
-  "name": "AmongUsWikiBot",
-  "version": "1.0.0",
-  "description": "An automated modular bot for making bulk edits on MediaWiki wikis, developed for the Among Us Wiki",
-  "scripts": {
-    "start": "ts-node index.ts"
-  },
-  "keywords": [
-    "mediawiki"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/caburum/AmongUsWikiBot.git"
-  },
-  "author": "Calum Dingwall (https://github.com/caburum)",
-  "license": "MIT",
-  "dependencies": {
-    "mwn": "^0.10.4"
-  },
-  "devDependencies": {
-    "typescript": "^4.2.4",
-    "ts-node": "^10.0.0"
-  }
+	"name": "AmongUsWikiBot",
+	"version": "1.0.0",
+	"description": "An automated modular bot for making bulk edits on MediaWiki wikis, developed for the Among Us Wiki",
+	"scripts": {
+		"start": "ts-node index.ts"
+	},
+	"keywords": [
+		"mediawiki"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/caburum/AmongUsWikiBot.git"
+	},
+	"author": "Calum Dingwall (https://github.com/caburum)",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/caburum/AmongUsWikiBot/issues"
+	},
+	"homepage": "https://github.com/caburum/AmongUsWikiBot#readme",
+	"dependencies": {
+		"mwn": "^0.10.4"
+	},
+	"devDependencies": {
+		"typescript": "^4.2.4",
+		"ts-node": "^10.0.0"
+	}
 }

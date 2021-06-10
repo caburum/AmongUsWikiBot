@@ -21,6 +21,8 @@ export default function(text: string) {
 		.replace(/\[\[[Hh]ats\|Hat]]/g, '[[Hat]]')
 		.replace(/\[\[[Pp]ets\|pet]]/g, '[[pet]]')
 		.replace(/\[\[[Pp]ets\|Pet]]/g, '[[Pet]]')
+		.replace(/\[\[[Aa]ccounts\|account]]/g, '[[account]]')
+		.replace(/\[\[[Aa]ccounts\|Account]]/g, '[[Account]]')
 		// Alternate names
 		.replace(/\[\[Upload Data\|Download Data]]/g, '[[Download Data]]')
 		.replace(/\[\[Divert Power\|Accept Diverted Power]]/g, '[[Accept Diverted Power]]')
