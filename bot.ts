@@ -16,10 +16,11 @@ const bot = new mwn({
 });
 
 bot.setOptions({
-	silent: false, // Suppress messages (except error messages)
+	silent: true, // Suppress built-in messages (except error messages)
 	retryPause: 5000, // Pause for 5000ms on maxlag error
 	maxRetries: 3, // Attempt to retry a failing requests up to 3 times
 	editConfig: {
+		suppressNochangeWarning: true, // Suppress default no change messages
 		exclusionRegex: /\{\{nobots\}\}/i // Use {{nobots}}
 	}
 });
@@ -47,7 +48,9 @@ require('fs').readdirSync(path.resolve('./modules/')).forEach(function(modulePat
 });
 
 // Login
-bot.login().then(async function() {
+bot.login().then(async function(response) {
+	if (response.result !== 'Success') return;
+	mwn.log(`[S] [mwn] Login successful: ${bot.options.username}@${bot.options.apiUrl?.split('/api.php').join('')}`)
 	// Get all pages
 	var pages: { pageid: number, ns: number, title: string }[] = await bot.request({
 		action: 'query',
@@ -90,6 +93,8 @@ async function processPage(title: string) {
 	}).then((data) => {
 		if (data.result == 'Success' && !data.nochange) {
 			mwn.log(`[S] Successfully edited ${data.title} (revision ${data.newrevid})`);
+		} else if (data.result == 'Success' && data.nochange) {
+			mwn.log(`[W] No change from edit to ${data.title}`);
 		}
 	});
 }
