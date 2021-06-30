@@ -23,6 +23,8 @@ export default function(text: string) {
 		.replace(/\[\[[Pp]ets\|Pet]]/g, '[[Pet]]')
 		.replace(/\[\[[Aa]ccounts\|account]]/g, '[[account]]')
 		.replace(/\[\[[Aa]ccounts\|Account]]/g, '[[Account]]')
+		.replace(/\[\[[Dd]oors\|door]]/g, '[[door]]')
+		.replace(/\[\[[Dd]oors\|Door]]/g, '[[Door]]')
 		// Alternate names
 		.replace(/\[\[Upload Data\|Download Data]]/g, '[[Download Data]]')
 		.replace(/\[\[Divert Power\|Accept Diverted Power]]/g, '[[Accept Diverted Power]]')
