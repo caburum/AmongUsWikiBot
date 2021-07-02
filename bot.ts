@@ -69,6 +69,8 @@ bot.login().then(async function(response) {
 			processPage(pages[i].title);
 			i++;
 			setTimeout(scheduleEdit, ratelimit, i);
+		} else {
+			process.exit(0); // Done
 		}
 	}
 	scheduleEdit(0);
