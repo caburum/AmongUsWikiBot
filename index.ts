@@ -115,7 +115,7 @@ async function processPage(title: string) {
 		if (data.result == 'Success' && !data.nochange) {
 			mwn.log(`[S] Successfully edited ${data.title} (revision ${data.newrevid})`);
 		} else if (data.result == 'Success' && data.nochange) {
-			mwn.log(`[W] No change from edit to ${data.title}`);
+			mwn.log(`[/] No change from edit to ${data.title}`);
 		}
 	});
 }
