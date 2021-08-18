@@ -162,7 +162,7 @@ async function loadConfig(): Promise<{ approvedBots: string[], replaces: Replace
 		}
 		await Promise.all(myReplaces.map((item, i) => { // Validate replace objects
 			if (typeof item.find === 'string' && typeof item.replace === 'string') { // Valid
-				item.find = new RegExp(item.find, 'g');
+				item.find = new RegExp(item.find, 'gm');
 			} else { // Invalid, remove the item
 				myReplaces.splice(i, 1);
 			}
