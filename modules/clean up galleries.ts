@@ -9,7 +9,7 @@ export default function(text: string, pageTitle: string) {
 	let galleryContents: string[] = text.match(/<gallery(?: .*?)?>.*?<\/gallery>/gs) || [];
 
 	galleryContents.forEach((gallery: string) => {
-		let newGallery = gallery.replace(/^File:/g, '');
+		let newGallery = gallery.replace(/^File:/gm, '');
 		text = text.replace(gallery, newGallery);
 	});
 
