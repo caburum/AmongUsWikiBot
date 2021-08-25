@@ -4,7 +4,14 @@ export default function(text: string, pageTitle: string) {
 	galleries.forEach((gallery: string) => {
 		let newGallery = gallery.replace(/ ?(captiontextcolor|bordercolor|bordersize|hideaddbutton)=[^\s>]+/gim, '');
 		text = text.replace(gallery, newGallery);
-	})
+	});
+	
+	let galleryContents: string[] = text.match(/<gallery(?: .*?)?>.*?<\/gallery>/gs) || [];
+
+	galleryContents.forEach((gallery: string) => {
+		let newGallery = gallery.replace(/^File:/g, '');
+		text = text.replace(gallery, newGallery);
+	});
 
 	return text;
 }
