@@ -1,6 +1,6 @@
 import { mwn, ApiPage } from 'mwn';
 import axios from 'axios';
-const path = require('path');
+import * as path from 'path';
 
 const ratelimit = 3 * 1000;
 
@@ -25,6 +25,12 @@ bot.setOptions({
 	}
 });
 
+var config: { approvedBots: string[], replaces: ReplaceObject[], namespaces: number[], [key: string]: any} = {
+	approvedBots: [],
+	replaces: [],
+	namespaces: [0]
+};
+
 // Load all edit modules
 var modules: any[] = [];
 require('fs').readdirSync(path.resolve('./modules/')).forEach(function(modulePath: string) {
@@ -33,24 +39,22 @@ require('fs').readdirSync(path.resolve('./modules/')).forEach(function(modulePat
 	}
 });
 
-var replaces: ReplaceObject[] = [];
-modules.push({
-	default: function(text: string) {
-		replaces.forEach((replace) => {
-			text = text.replace(replace.find, replace.replace);
-		})
-		return text;
-	},
-	summary: '[[Project:Bots/config|replaces]]'
-});
-
 // Login
 bot.login().then(async function(response) {
 	if (response.result !== 'Success') return;
 	mwn.log(`[S] [mwn] Login successful: ${bot.options.username}@${bot.options.apiUrl?.split('/api.php').join('')}`);
 
-	var config = await loadConfig() || { approvedBots: [], replaces: [] };
-	replaces = config.replaces;
+	await loadConfig();
+
+	modules.push({
+		default: function(text: string) {
+			config.replaces.forEach((replace) => {
+				text = text.replace(replace.find, replace.replace);
+			})
+			return text;
+		},
+		summary: '[[Project:Bots/config|replaces]]'
+	});
 	
 	if (config.approvedBots.length && !config.approvedBots.includes(bot.state.lgusername)) return mwn.log('[E] User account is not approved on this wiki. Please contact your local administrator.');
 
@@ -72,15 +76,22 @@ bot.login().then(async function(response) {
 	})
 
 	// Get all pages
-	var pages: { pageid: number, ns: number, title: string }[] = await bot.request({
-		action: 'query',
-		list: 'allpages',
-		prop: 'info',
-		aplimit: 'max'
-	}).then((data) => {
-		mwn.log(`[i] Loaded ${data.query?.allpages.length} pages`);
-		return data.query?.allpages;
-	});
+	var pages: { pageid: number, ns: number, title: string }[] = [];
+
+	await Promise.all(config.namespaces.map(async ns => {
+		await bot.continuedQuery({
+			action: 'query',
+			list: 'allpages',
+			prop: 'info',
+			aplimit: 'max',
+			apnamespace: ns
+		}).then((results) => {
+			results.forEach(result => {
+				pages.push(...result.query?.allpages);
+			});
+		});
+	}));
+	mwn.log(`[i] Loaded ${pages.length} pages`);
 
 	// Run through each page with a ratelimit
 	const scheduleEdit = (i: number) => {
@@ -120,15 +131,23 @@ async function processPage(title: string) {
 	});
 }
 
-async function loadConfig(): Promise<{ approvedBots: string[], replaces: ReplaceObject[] } | void> {
+async function loadConfig(): Promise<void> {
 	var configPage: ApiPage = await bot.read('Project:Bots/config');	
 	var configData: string = configPage.revisions?.[0].content || '';
 	if (configPage.missing || !configData) return mwn.log('[i] No config page');
 	mwn.log('[i] Loaded config page');
 
-	var approvedBots = JSON.parse((configData.match(/(?<=<!-- ?approved-bots ?-->).*(?=<!-- ?approved-bots-end ?-->)/s)?.[0] || '[]').trim());
+	function parseConfig(section: string): any[] {
+		let regex = new RegExp(`(?<=<!--\\s*${section}\\s*-->).*(?=<!--\\s*${section}-end\\s*-->)`, 's');
+		let match = configData.match(regex)?.[0]?.trim();
+		
+		return match ? JSON.parse(match) : config[section];
+	}
 
-	var replaceMatches = JSON.parse((configData.match(/(?<=<!-- ?replaces ?-->).*(?=<!-- ?replaces-end ?-->)/s)?.[0] || '[]').trim());
+	config.approvedBots = parseConfig('approved-bots');
+	var replaceMatches = parseConfig('replaces');
+	config.namespaces = parseConfig('namespaces');
+
 	var replacesArray: ReplaceObject[] = [];
 
 	await Promise.all(replaceMatches.map(async (replace: string | object) => {
@@ -172,7 +191,8 @@ async function loadConfig(): Promise<{ approvedBots: string[], replaces: Replace
 
 	if (!replacesArray) { mwn.log('[i] No replaces loaded') }
 	else { mwn.log(`[i] Loaded ${replacesArray.length} replaces`) };
-	return {approvedBots, replaces: replacesArray};
+
+	config.replaces = replacesArray;
 }
 
 interface ReplaceObject extends Object {
