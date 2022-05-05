@@ -25,36 +25,27 @@ bot.setOptions({
 	}
 });
 
-var config: { approvedBots: string[], replaces: ReplaceObject[], namespaces: number[], [key: string]: any} = {
+var config: {
+	approvedBots: string[],
+	replaces: ReplaceObject[],
+	namespaces: number[],
+	disabledModules: string[],
+	[key: string]: any
+} = {
 	approvedBots: [],
 	replaces: [],
-	namespaces: [0]
+	namespaces: [0],
+	disabledModules: ['convert interwiki to template']
 };
-
-// Load all edit modules
 var modules: any[] = [];
-require('fs').readdirSync(path.resolve('./modules/')).forEach(function(modulePath: string) {
-	if (modulePath.match(/.*\.(?<!disabled\.)(?:js|ts)/)) {
-		modules.push(require(path.resolve('./modules/' + modulePath)));
-	}
-});
 
 // Login
 bot.login().then(async function(response) {
 	if (response.result !== 'Success') return;
 	mwn.log(`[S] [mwn] Login successful: ${bot.options.username}@${bot.options.apiUrl?.split('/api.php').join('')}`);
 
+	// Load config from the wiki
 	await loadConfig();
-
-	modules.push({
-		default: function(text: string) {
-			config.replaces.forEach((replace) => {
-				text = text.replace(replace.find, replace.replace);
-			})
-			return text;
-		},
-		summary: '[[Project:Bots/config|replaces]]'
-	});
 	
 	if (config.approvedBots.length && !config.approvedBots.includes(bot.state.lgusername)) return mwn.log('[E] User account is not approved on this wiki. Please contact your local administrator.');
 
@@ -74,6 +65,17 @@ bot.login().then(async function(response) {
 			}
 		});
 	})
+
+	// Load all edit modules
+	require('fs').readdirSync(path.resolve('./modules/')).forEach((mPath: string) => {
+		if (
+			mPath.match(/.*\.(?<!disabled\.)(?:js|ts)/) &&
+			!config.disabledModules.includes(path.basename(mPath, path.extname(mPath)))
+		) {
+			modules.push(require(path.resolve('./modules/' + mPath)));
+		}
+	});
+	mwn.log(`[i] Loaded ${modules.length} modules`);
 
 	// Get all pages
 	var pages: { pageid: number, ns: number, title: string }[] = [];
@@ -108,19 +110,31 @@ bot.login().then(async function(response) {
 
 async function processPage(title: string) {
 	await bot.edit(title, (rev) => {
-		let pageContent: string = rev.content; // Original content
-		let pageEdit: string = pageContent; // Content to be edited
-		let summaryChanges: string[] = [];
-		modules.forEach((module: any) => { // Run page through each module to stage edits
+		let pageContent = rev.content; // Original content
+		let pageEdit = pageContent; // Content to be edited
+		let summaryChanges = new Set<string>([]);
+
+		// Run page through each module to stage edits
+		modules.forEach((module: any) => {
 			let thisModuleEdit: string = module.default(pageEdit, title);
 			if (pageEdit != thisModuleEdit) { // A change was made
 				pageEdit = thisModuleEdit;
-				summaryChanges.push(module.summary);
+				summaryChanges.add(module.summary);
 			}
 		});
+
+		// Run page through each replace
+		config.replaces.forEach((replace) => {
+			let thisModuleEdit = pageEdit.replace(replace.find, replace.replace);
+			if (pageEdit != thisModuleEdit) { // A change was made
+				pageEdit = thisModuleEdit;
+				summaryChanges.add(replace.summary || '[[Project:Bots/config|replaces]]');
+			}
+		})
+
 		return {
 			text: pageEdit,
-			summary: `Automated: ${summaryChanges.join(', ')}`
+			summary: `Automated: ${[...summaryChanges].join(', ')}`
 		}
 	}).then((data) => {
 		if (data.result == 'Success' && !data.nochange) {
@@ -147,6 +161,7 @@ async function loadConfig(): Promise<void> {
 	config.approvedBots = parseConfig('approved-bots');
 	var replaceMatches = parseConfig('replaces');
 	config.namespaces = parseConfig('namespaces');
+	config.disabledModules = parseConfig('disabled-modules');
 
 	var replacesArray: ReplaceObject[] = [];
 
@@ -196,7 +211,7 @@ async function loadConfig(): Promise<void> {
 }
 
 interface ReplaceObject extends Object {
-	name?: string;
+	summary?: string;
 	find: string | RegExp;
 	replace: string;
 }
