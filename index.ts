@@ -1,7 +1,10 @@
 import { mwn, ApiPage } from 'mwn';
-import axios from 'axios';
+import { request } from 'undici';
 import * as path from 'path';
 
+import type { MwnError } from 'mwn/build/error';
+
+const logAll = false; // log non-changes
 const ratelimit = 3 * 1000;
 
 const bot = new mwn({
@@ -102,7 +105,8 @@ bot.login().then(async function(response) {
 			i++;
 			setTimeout(scheduleEdit, ratelimit, i);
 		} else {
-			process.exit(0); // Done
+			mwn.log('[i] Done');
+			process.exit(0);
 		}
 	}
 	scheduleEdit(0);
@@ -140,7 +144,13 @@ async function processPage(title: string) {
 		if (data.result == 'Success' && !data.nochange) {
 			mwn.log(`[S] Successfully edited ${data.title} (revision ${data.newrevid})`);
 		} else if (data.result == 'Success' && data.nochange) {
-			mwn.log(`[/] No change from edit to ${data.title}`);
+			if (logAll) mwn.log(`[/] No change from edit to ${data.title}`);
+		}
+	}).catch((e: MwnError) => {
+		if (e.code == 'bot-denied') mwn.log(`[W] Denied editing ${title}`);
+		else {
+			mwn.log(`[E] ${e.code} ${e.info || ''}`);
+			console.error(e);
 		}
 	});
 }
@@ -169,21 +179,15 @@ async function loadConfig(): Promise<void> {
 		let myReplaces: ReplaceObject[] = [];
 		if (typeof replace === 'string') { // Extra JSON page
 			if (/https?:\/\/.+/.test(replace)) { // External URL
-				await axios
-					.request({
-						url: replace
-					})
-					.then((response: any) => {
-						console.log()
-						if (typeof response.data === 'object') {
-							myReplaces = response.data;
-						} else {
-							return mwn.log('[W] No valid JSON in external replaces URL: ' + replace);
-						}
-					})
-					.catch((err) => {
-						return mwn.log('[E] Error while fetching external replaces URL: ' + replace);
-					})
+				try {
+					const { body } = await request(replace);
+					const data = await body.json();
+
+					if (Array.isArray(data)) myReplaces = data;
+					else return mwn.log('[W] No valid JSON in external replaces URL: ' + replace);
+				} catch (e) {
+					return mwn.log('[E] Error while fetching external replaces URL: ' + replace);
+				}
 			} else { // Internal wiki page
 				let replacePage: ApiPage = await bot.read(replace);
 				if (replacePage.missing) return mwn.log('[W] Replaces page not found: ' + replace);
@@ -204,8 +208,8 @@ async function loadConfig(): Promise<void> {
 		replacesArray = replacesArray.concat(myReplaces);
 	}));
 
-	if (!replacesArray) { mwn.log('[i] No replaces loaded') }
-	else { mwn.log(`[i] Loaded ${replacesArray.length} replaces`) };
+	if (!replacesArray) mwn.log('[i] No replaces loaded');
+	else mwn.log(`[i] Loaded ${replacesArray.length} replaces`);
 
 	config.replaces = replacesArray;
 }
